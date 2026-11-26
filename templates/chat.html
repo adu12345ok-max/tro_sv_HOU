@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Chat với người bán — TrọUni{% endblock %}
+
+{% block content %}
+<div class="container nt-page">
+  <div class="chat-shell" id="chat-app" data-active-conv="{{ active_conv_id or '' }}" data-user-id="{{ user.id }}">
+    <!-- Left Sidebar: Conversation List -->
+    <aside class="chat-sidebar">
+      <div class="chat-sidebar-head">
+        <h2>Tin nhắn</h2>
+        <span class="chat-count-pill" id="chat-conv-count">{{ conversations|length }}</span>
+      </div>
+
+      <div class="chat-conv-list" id="chat-conv-list">
+        {% if conversations %}
+          {% for c in conversations %}
+            <button
+              type="button"
+              class="chat-conv-item {% if c.id == active_conv_id %}active{% endif %}"
+              data-conv-id="{{ c.id }}"
+            >
+              <img class="chat-conv-thumb" src="{{ c.listing_image }}" alt="{{ c.listing_title }}" />
+              <div class="chat-conv-body">
+                <div class="chat-conv-top">
+                  <strong class="chat-conv-name">{{ c.partner_name }}</strong>
+                  <span class="chat-conv-time">{{ (c.last_message_at or c.updated_at)[-5:] }}</span>
+                </div>
+                <div class="chat-conv-listing">{{ c.listing_title }}</div>
+                <div class="chat-conv-bottom">
+                  <span class="chat-conv-preview">{{ c.last_message or 'Bắt đầu cuộc trò chuyện...' }}</span>
+                  {% if c.unread_count > 0 %}
+                    <span class="chat-unread-dot">{{ c.unread_count }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </button>
+          {% endfor %}
+        {% else %}
+          <div class="chat-empty-list">
+            <p>Chưa có cuộc trò chuyện nào.</p>
+            <a class="btn btn-primary btn-sm" href="/">Tìm phòng để chat ngay</a>
+          </div>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- Right Pane: Active Thread -->
+    <section class="chat-thread">
+      <div class="chat-thread-empty" id="chat-thread-empty" {% if active_conv_id %}style="display:none;"{% endif %}>
+        <div class="chat-empty-ico">💬</div>
+        <h3>Chọn một cuộc trò chuyện</h3>
+        <p>Nhắn tin trực tiếp với chủ trọ để hỏi phòng trống, giá điện nước và hẹn lịch xem phòng.</p>
+        <a class="btn btn-primary" href="/">Khám phá phòng trọ</a>
+      </div>
+
+      <div class="chat-thread-active" id="chat-thread-active" {% if not active_conv_id %}style="display:none;"{% endif %}>
+        <!-- Partner Header -->
+        <div class="chat-header">
+          <div class="chat-partner">
+            <span class="nt-seller-avatar" id="chat-partner-avatar">?</span>
+            <div>
+              <div class="chat-partner-name" id="chat-partner-name">Đang tải...</div>
+              <div class="chat-partner-sub" id="chat-partner-sub">Chủ trọ · Đang hoạt động</div>
+            </div>
+          </div>
+          <a class="btn btn-ghost btn-sm" id="chat-call-btn" href="#">Gọi điện</a>
+        </div>
+
+        <!-- Pinned Listing Banner -->
+        <a class="chat-listing-bar" id="chat-listing-bar" href="#">
+          <img id="chat-listing-img" src="/static/img/room_mini.svg" alt="" />
+          <div class="chat-listing-info">
+            <div class="chat-listing-title" id="chat-listing-title">...</div>
+            <div class="chat-listing-meta">
+              <span class="nt-price" id="chat-listing-price"></span>
+              <span id="chat-listing-district"></span>
+            </div>
+          </div>
+          <span class="chat-listing-link">Xem tin &rarr;</span>
+        </a>
+
+        <!-- Messages Feed -->
+        <div class="chat-messages" id="chat-messages"></div>
+
+        <!-- Quick Replies -->
+        <div class="chat-quick-bar">
+          <button type="button" class="quick-reply-btn" data-quick-msg="Phòng này hiện còn trống không ạ?">Phòng còn trống không?</button>
+          <button type="button" class="quick-reply-btn" data-quick-msg="Chiều nay em qua xem phòng được không ạ?">Hẹn xem phòng</button>
+          <button type="button" class="quick-reply-btn" data-quick-msg="Tiền điện, nước và dịch vụ tính thế nào ạ?">Hỏi điện nước</button>
+          <button type="button" class="quick-reply-btn" data-quick-msg="Cho em xin địa chỉ cụ thể để qua xem nhé!">Xin địa chỉ</button>
+        </div>
+
+        <!-- Message Input -->
+        <form class="chat-composer" id="chat-form">
+          <input
+            type="text"
+            id="chat-input"
+            name="content"
+            placeholder="Nhập tin nhắn gửi người bán..."
+            autocomplete="off"
+            required
+          />
+          <button class="btn btn-primary" type="submit" id="chat-send-btn">Gửi</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+

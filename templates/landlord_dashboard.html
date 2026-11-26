@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Kênh Chủ Trọ — TrọUni{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="dash-header reveal">
+    <div>
+      <h1>Kênh Chủ Cho Thuê</h1>
+      <p style="color:var(--ink-muted);">Đăng phòng trọ, chung cư mini và theo dõi trạng thái kiểm duyệt từ Admin.</p>
+    </div>
+    <a class="btn btn-ghost" href="/">Xem trang chủ</a>
+  </div>
+
+  <div class="kpi-grid reveal">
+    <div class="kpi-card">
+      <div class="k-label">Tổng tin đã đăng</div>
+      <div class="k-val">{{ summary.total }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="k-label">Đã được duyệt</div>
+      <div class="k-val" style="color:var(--mint);">{{ summary.approved }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="k-label">Đang chờ duyệt</div>
+      <div class="k-val" style="color:var(--amber);">{{ summary.pending }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="k-label">Bị từ chối</div>
+      <div class="k-val" style="color:var(--rose);">{{ summary.rejected }}</div>
+    </div>
+  </div>
+
+  <div class="panel reveal">
+    <h3>Đăng tin cho thuê mới</h3>
+    <form class="form-grid" method="post" action="/landlord/listings/create">
+      <div class="form-row-2">
+        <div class="field">
+          <label>Tiêu đề tin đăng</label>
+          <input class="input" type="text" name="title" required placeholder="VD: Chung cư mini full nội thất gần ĐH Bách Khoa" />
+        </div>
+        <div class="field">
+          <label>Loại hình</label>
+          <select class="select" name="property_type" required>
+            {% for pt in property_types %}
+              <option value="{{ pt }}">{{ pt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="field">
+          <label>Giá thuê (VNĐ/tháng)</label>
+          <input class="input" type="number" name="price" min="500000" step="100000" required placeholder="3500000" />
+        </div>
+        <div class="field">
+          <label>Diện tích (m²)</label>
+          <input class="input" type="number" name="area" min="8" step="1" required placeholder="25" />
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="field">
+          <label>Quận / Khu vực</label>
+          <select class="select" name="district" required>
+            {% for d in districts %}
+              <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Số điện thoại liên hệ</label>
+          <input class="input" type="text" name="contact_phone" value="{{ user.phone }}" required />
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="field">
+          <label>Địa chỉ chi tiết</label>
+          <input class="input" type="text" name="address" required placeholder="Số nhà, ngõ, tên đường..." />
+        </div>
+        <div class="field">
+          <label>Phong cách ảnh minh họa</label>
+          <select class="select" name="image_style">
+            <option value="/static/img/room_mini.svg">Chung cư mini hiện đại</option>
+            <option value="/static/img/room_loft.svg">Phòng trọ có gác xép</option>
+            <option value="/static/img/room_studio.svg">Studio tối giản</option>
+            <option value="/static/img/room_dorm.svg">Ký túc xá tư nhân</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Tiện ích phòng</label>
+        <div class="amenity-grid">
+          {% for am in amenity_options %}
+            <label class="check-pill">
+              <input type="checkbox" name="amenities" value="{{ am }}" />
+              <span>{{ am }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Mô tả chi tiết</label>
+        <textarea class="textarea" name="description" rows="3" required placeholder="Mô tả vị trí gần trường, giá điện nước, an ninh, giờ giấc..."></textarea>
+      </div>
+
+      <div>
+        <button class="btn btn-primary" type="submit">Gửi tin đăng (Chờ Admin duyệt)</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel reveal">
+    <h3>Danh sách tin bạn đã đăng</h3>
+    {% if listings %}
+      <div class="mod-list">
+        {% for item in listings %}
+          <div class="mod-card">
+            <img class="mod-thumb" src="{{ item.image_url }}" alt="{{ item.title }}" />
+            <div>
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem; margin-bottom:0.35rem;">
+                <span class="area-tag">{{ item.property_type }}</span>
+                <span class="status-badge status-{{ item.status }}">
+                  {% if item.status == 'approved' %}Đã duyệt{% elif item.status == 'pending' %}Chờ duyệt{% else %}Bị từ chối{% endif %}
+                </span>
+              </div>
+              <a class="card-title" href="/listing/{{ item.id }}">{{ item.title }}</a>
+              <div class="card-address" style="margin-top:0.25rem;">
+                {{ item.price | vnd }} • {{ item.area | int }} m² • {{ item.district }}
+              </div>
+              {% if item.admin_note %}
+                <div style="font-size:0.83rem; color:var(--indigo); margin-top:0.35rem;">
+                  Ghi chú Admin: {{ item.admin_note }}
+                </div>
+              {% endif %}
+            </div>
+            <div class="mod-actions">
+              <a class="btn btn-ghost btn-sm" href="/listing/{{ item.id }}">Xem bài</a>
+              <form method="post" action="/landlord/listings/{{ item.id }}/delete" onsubmit="return confirm('Xóa tin đăng này?');">
+                <button class="btn btn-rose btn-sm" style="width:100%;" type="submit">Xóa tin</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">Bạn chưa đăng tin nào. Hãy sử dụng biểu mẫu phía trên để đăng phòng đầu tiên!</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

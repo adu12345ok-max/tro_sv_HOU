@@ -1,0 +1,39 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment variables & secrets
+.env
+.env.*
+
+# Local SQLite database (tự động khởi tạo lại kèm dữ liệu mẫu khi chạy app.py)
+# Nếu muốn đẩy kèm dữ liệu hiện tại lên GitHub, hãy xóa hoặc comment dòng dưới
+*.db
+*.sqlite3
+*.sqlite3-journal
+
+# Visual Studio & VS Code
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+

@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block title %}Thuê phòng trọ Hà Nội — TrọUni{% endblock %}
+
+{% block content %}
+<div class="container nt-page">
+  <!-- Filter Card (Nhà Tốt style) -->
+  <section class="nt-filter-card">
+    <div class="nt-breadcrumb">
+      <a href="/">TrọUni</a>
+      <span>/</span>
+      <a href="/">Thuê phòng trọ</a>
+      <span>/</span>
+      <strong>{% if filters.district %}Thuê phòng trọ Q. {{ filters.district }}{% else %}Thuê phòng trọ Hà Nội{% endif %}</strong>
+    </div>
+
+    <div class="nt-head-row">
+      <div>
+        <h1>
+          Thuê phòng trọ {% if filters.district %}Q. {{ filters.district }}{% else %}Hà Nội{% endif %},
+          {{ listings|length }} phòng trọ sinh viên giá tốt
+        </h1>
+        <p class="nt-subtitle">
+          Phòng trọ, chung cư mini &amp; KTX tư nhân đã kiểm duyệt. Kết nối trực tiếp chủ trọ, nhắn tin hỏi phòng nhanh chóng.
+        </p>
+      </div>
+      {% if user and user.role == 'admin' %}
+        <a class="nt-save-search-btn" href="/admin">Admin duyệt tin ({{ stats.pending_count }})</a>
+      {% elif user %}
+        <a class="nt-save-search-btn" href="/renter/favorites">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          Tin đã lưu
+        </a>
+      {% else %}
+        <a class="nt-save-search-btn" href="/auth?tab=login">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          Lưu tìm kiếm
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Filter Controls Row -->
+    <form class="nt-filter-bar" method="get" action="/" id="nt-filter-form">
+      <input type="hidden" name="q" value="{{ filters.q }}" />
+      <input type="hidden" name="district" value="{{ filters.district }}" />
+      <input type="hidden" name="sort" value="{{ filters.sort }}" />
+
+      <span class="nt-pill nt-pill-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+        Lọc
+      </span>
+
+      <span class="nt-pill nt-pill-dark">Cho thuê</span>
+
+      <select class="nt-pill-select {% if filters.property_type %}is-active{% endif %}" name="property_type" onchange="this.form.submit()">
+        <option value="">Tất cả loại hình</option>
+        {% for pt in property_types %}
+          <option value="{{ pt }}" {% if filters.property_type == pt %}selected{% endif %}>{{ pt }}</option>
+        {% endfor %}
+      </select>
+
+      <select class="nt-pill-select {% if filters.min_price or filters.max_price %}is-active{% endif %}" onchange="applyPricePreset(this.value)">
+        <option value="">Giá thuê</option>
+        <option value="0-2000000" {% if filters.max_price == '2000000' and not filters.min_price %}selected{% endif %}>Dưới 2 triệu</option>
+        <option value="2000000-3000000" {% if filters.min_price == '2000000' and filters.max_price == '3000000' %}selected{% endif %}>2 - 3 triệu</option>
+        <option value="3000000-5000000" {% if filters.min_price == '3000000' and filters.max_price == '5000000' %}selected{% endif %}>3 - 5 triệu</option>
+        <option value="5000000-" {% if filters.min_price == '5000000' and not filters.max_price %}selected{% endif %}>Trên 5 triệu</option>
+      </select>
+      <input type="hidden" name="min_price" id="f-min-price" value="{{ filters.min_price }}" />
+      <input type="hidden" name="max_price" id="f-max-price" value="{{ filters.max_price }}" />
+
+      <select class="nt-pill-select {% if filters.min_area or filters.max_area %}is-active{% endif %}" onchange="applyAreaPreset(this.value)">
+        <option value="">Diện tích</option>
+        <option value="0-20" {% if filters.max_area == '20' and not filters.min_area %}selected{% endif %}>Dưới 20 m²</option>
+        <option value="20-30" {% if filters.min_area == '20' and filters.max_area == '30' %}selected{% endif %}>20 - 30 m²</option>
+        <option value="30-40" {% if filters.min_area == '30' and filters.max_area == '40' %}selected{% endif %}>30 - 40 m²</option>
+        <option value="40-" {% if filters.min_area == '40' and not filters.max_area %}selected{% endif %}>Trên 40 m²</option>
+      </select>
+      <input type="hidden" name="min_area" id="f-min-area" value="{{ filters.min_area }}" />
+      <input type="hidden" name="max_area" id="f-max-area" value="{{ filters.max_area }}" />
+
+      {% if filters.q or filters.district or filters.property_type or filters.min_price or filters.max_price or filters.min_area or filters.max_area %}
+        <a class="nt-clear-link" href="/">Xoá lọc</a>
+      {% endif %}
+    </form>
+
+    <!-- District Quick Chips -->
+    <div class="nt-chip-row">
+      <span class="nt-chip-label">Quận huyện:</span>
+      <div class="nt-chips">
+        {% for d in districts[:7] %}
+          <a
+            class="nt-chip {% if filters.district == d %}active{% endif %}"
+            href="/?district={{ d|urlencode }}{% if filters.property_type %}&property_type={{ filters.property_type|urlencode }}{% endif %}{% if filters.min_price %}&min_price={{ filters.min_price }}{% endif %}{% if filters.max_price %}&max_price={{ filters.max_price }}{% endif %}{% if filters.sort != 'newest' %}&sort={{ filters.sort }}{% endif %}"
+          >Q. {{ d }}</a>
+        {% endfor %}
+        {% if filters.district %}
+          <a class="nt-chip" href="/">Tất cả quận</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Price Quick Chips -->
+    <div class="nt-chip-row">
+      <span class="nt-chip-label">Giá thuê:</span>
+      <div class="nt-chips">
+        <a class="nt-chip {% if filters.max_price == '2000000' and not filters.min_price %}active{% endif %}" href="/?max_price=2000000{% if filters.district %}&district={{ filters.district|urlencode }}{% endif %}{% if filters.property_type %}&property_type={{ filters.property_type|urlencode }}{% endif %}">Dưới 2 triệu</a>
+        <a class="nt-chip {% if filters.min_price == '2000000' and filters.max_price == '3000000' %}active{% endif %}" href="/?min_price=2000000&max_price=3000000{% if filters.district %}&district={{ filters.district|urlencode }}{% endif %}{% if filters.property_type %}&property_type={{ filters.property_type|urlencode }}{% endif %}">2 - 3 triệu</a>
+        <a class="nt-chip {% if filters.min_price == '3000000' and filters.max_price == '5000000' %}active{% endif %}" href="/?min_price=3000000&max_price=5000000{% if filters.district %}&district={{ filters.district|urlencode }}{% endif %}{% if filters.property_type %}&property_type={{ filters.property_type|urlencode }}{% endif %}">3 - 5 triệu</a>
+        <a class="nt-chip {% if filters.min_price == '5000000' and not filters.max_price %}active{% endif %}" href="/?min_price=5000000{% if filters.district %}&district={{ filters.district|urlencode }}{% endif %}{% if filters.property_type %}&property_type={{ filters.property_type|urlencode }}{% endif %}">Trên 5 triệu</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main 2-Column Layout -->
+  <div class="nt-main-grid">
+    <!-- Left Column: Tabs + Listing Feed -->
+    <div class="nt-feed-col">
+      <div class="nt-toolbar">
+        <div class="nt-tabs">
+          <a class="nt-tab {% if not filters.property_type %}active{% endif %}" href="/?{% if filters.district %}district={{ filters.district|urlencode }}&{% endif %}{% if filters.min_price %}min_price={{ filters.min_price }}&{% endif %}{% if filters.max_price %}max_price={{ filters.max_price }}&{% endif %}sort={{ filters.sort }}">Tất cả</a>
+          {% for pt in property_types %}
+            <a class="nt-tab {% if filters.property_type == pt %}active{% endif %}" href="/?property_type={{ pt|urlencode }}{% if filters.district %}&district={{ filters.district|urlencode }}{% endif %}{% if filters.min_price %}&min_price={{ filters.min_price }}{% endif %}{% if filters.max_price %}&max_price={{ filters.max_price }}{% endif %}&sort={{ filters.sort }}">{{ pt }}</a>
+          {% endfor %}
+        </div>
+
+        <div class="nt-toolbar-right">
+          <select class="nt-sort-select" onchange="applySort(this.value)" aria-label="Sắp xếp">
+            <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Tin mới nhất</option>
+            <option value="price_asc" {% if filters.sort == 'price_asc' %}selected{% endif %}>Giá thấp đến cao</option>
+            <option value="price_desc" {% if filters.sort == 'price_desc' %}selected{% endif %}>Giá cao đến thấp</option>
+            <option value="area_desc" {% if filters.sort == 'area_desc' %}selected{% endif %}>Diện tích lớn nhất</option>
+          </select>
+
+          <div class="nt-view-toggle" role="group" aria-label="Chế độ hiển thị">
+            <button type="button" class="view-btn active" data-view-mode="list" title="Hiển thị dạng danh sách">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+            <button type="button" class="view-btn" data-view-mode="grid" title="Hiển thị dạng lưới">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {% if listings %}
+        <div class="nt-feed" id="nt-listings-feed">
+          {% for item in listings %}
+            <article class="nt-card">
+              <div class="nt-card-top-meta">
+                {{ item.property_type }} Quận {{ item.district }} - {{ item.address }} · {{ item.area | int }}m²
+              </div>
+
+              <a class="nt-card-media" href="/listing/{{ item.id }}">
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
+                <span class="nt-badge-priority">Đã kiểm duyệt</span>
+                <span class="nt-badge-type">{{ item.property_type }}</span>
+              </a>
+
+              <div class="nt-card-body">
+                <div class="nt-title-row">
+                  <a class="nt-card-title" href="/listing/{{ item.id }}">{{ item.title }}</a>
+                  <button
+                    class="nt-save-btn {% if item.is_favorite %}active{% endif %}"
+                    type="button"
+                    data-fav-toggle="{{ item.id }}"
+                    data-fav-style="pill"
+                  >
+                    <span class="heart-ico">{% if item.is_favorite %}&#10084;{% else %}&#9825;{% endif %}</span>
+                    <span class="save-txt">{% if item.is_favorite %}Đã lưu{% else %}Lưu{% endif %}</span>
+                  </button>
+                </div>
+
+                <div class="nt-amenities-line">
+                  {{ item.amenities_list[:5] | join(' · ') }}
+                </div>
+
+                <div class="nt-price-line">
+                  <span class="nt-price">{{ item.price | trieu }}</span>
+                  <span class="nt-area">{{ item.area | int }} m²</span>
+                </div>
+
+                <div class="nt-location-line">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <span>Q. {{ item.district }}, Hà Nội</span>
+                </div>
+
+                <div class="nt-seller-row">
+                  <div class="nt-seller-info">
+                    <span class="nt-seller-avatar">{{ item.landlord_name[0]|upper }}</span>
+                    <span class="nt-seller-name">{{ item.landlord_name }}</span>
+                    <span class="nt-seller-meta">· {{ item.landlord_listing_count or 1 }} tin</span>
+                  </div>
+
+                  <div class="nt-card-actions">
+                    {% if not user or user.id != item.landlord_id %}
+                      <a class="nt-chat-cta" href="/chat?listing_id={{ item.id }}">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                        Chat với người bán
+                      </a>
+                    {% else %}
+                      <span class="nt-own-tag">Tin của bạn</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <h3>Chưa tìm thấy phòng trọ phù hợp</h3>
+          <p style="margin:0.5rem 0 1.2rem;">Thử nới rộng khoảng giá, diện tích hoặc chọn lại quận khác nhé.</p>
+          <a class="btn btn-primary" href="/">Xem tất cả phòng trọ</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Sidebar (Nhà Tốt style) -->
+    <aside class="nt-sidebar">
+      <div class="nt-side-card">
+        <div class="nt-side-head">
+          <h3>Thuê phòng trọ theo giá</h3>
+          <span>&#8963;</span>
+        </div>
+        <ul class="nt-side-list">
+          <li><a href="/?max_price=2000000">Thuê phòng trọ giá dưới 2 triệu</a></li>
+          <li><a href="/?min_price=2000000&max_price=3000000">Thuê phòng trọ giá 2 - 3 triệu</a></li>
+          <li><a href="/?min_price=3000000&max_price=5000000">Thuê phòng trọ giá 3 - 5 triệu</a></li>
+          <li><a href="/?min_price=5000000">Thuê phòng trọ giá trên 5 triệu</a></li>
+        </ul>
+      </div>
+
+      <div class="nt-side-card">
+        <div class="nt-side-head">
+          <h3>Thuê phòng trọ theo diện tích</h3>
+          <span>&#8963;</span>
+        </div>
+        <ul class="nt-side-list">
+          <li><a href="/?max_area=20">Phòng trọ dưới 20 m²</a></li>
+          <li><a href="/?min_area=20&max_area=30">Phòng trọ 20 - 30 m²</a></li>
+          <li><a href="/?min_area=30&max_area=40">Phòng trọ 30 - 40 m²</a></li>
+          <li><a href="/?min_area=40">Phòng trọ trên 40 m²</a></li>
+        </ul>
+      </div>
+
+      <div class="nt-side-card">
+        <div class="nt-side-head">
+          <h3>Khu vực sinh viên nổi bật</h3>
+          <span>&#8963;</span>
+        </div>
+        <ul class="nt-side-list">
+          {% for d in districts[:6] %}
+            <li><a href="/?district={{ d|urlencode }}">Thuê phòng trọ Q. {{ d }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

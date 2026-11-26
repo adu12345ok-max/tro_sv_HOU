@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Phòng Đã Lưu — TrọUni{% endblock %}
+
+{% block content %}
+<div class="container" data-favorites-page="true">
+  <div class="dash-header reveal">
+    <div>
+      <h1>Danh sách phòng đã lưu</h1>
+      <p style="color:var(--ink-muted);">Các phòng trọ và chung cư mini bạn đã đánh dấu để tiện so sánh và liên hệ.</p>
+    </div>
+    <a class="btn btn-primary" href="/">Tìm thêm phòng</a>
+  </div>
+
+  <div style="margin-top:1.8rem;">
+    {% if listings %}
+      <div class="listings-grid">
+        {% for item in listings %}
+          <article class="card reveal">
+            <div class="card-media">
+              <img src="{{ item.image_url }}" alt="{{ item.title }}" />
+              <span class="type-badge">{{ item.property_type }}</span>
+              <button class="fav-btn active" type="button" data-fav-toggle="{{ item.id }}" title="Bỏ lưu">&#10084;</button>
+            </div>
+            <div class="card-body">
+              <div class="price-row">
+                <span class="price">{{ item.price | vnd }}</span>
+                <span class="area-tag">{{ item.area | int }} m²</span>
+              </div>
+              <a class="card-title" href="/listing/{{ item.id }}">{{ item.title }}</a>
+              <div class="card-address">{{ item.district }} • {{ item.address }}</div>
+              <div class="card-footer">
+                <span>SĐT: <strong>{{ item.contact_phone }}</strong></span>
+                <a class="btn btn-ghost btn-sm" href="/listing/{{ item.id }}">Xem chi tiết</a>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state reveal">
+        <h3>Bạn chưa lưu phòng nào</h3>
+        <p style="margin:0.5rem 0 1.2rem;">Nhấn biểu tượng trái tim trên bất kỳ phòng nào ở trang chủ để lưu lại xem sau.</p>
+        <a class="btn btn-primary" href="/">Khám phá phòng ngay</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

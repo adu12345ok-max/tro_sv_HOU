@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Admin Mode — Duyệt Bài Đăng TrọUni{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="dash-header reveal">
+    <div>
+      <span class="role-pill role-admin" style="margin-bottom:0.4rem; display:inline-block;">Admin Mode</span>
+      <h1>Trung tâm kiểm duyệt nhà trọ &amp; chung cư mini</h1>
+      <p style="color:var(--ink-muted);">Phê duyệt, từ chối kèm ghi chú hoặc xóa các bài đăng trước khi hiển thị cho sinh viên.</p>
+    </div>
+    <a class="btn btn-ghost" href="/">Xem trang người dùng</a>
+  </div>
+
+  <div class="kpi-grid reveal">
+    <div class="kpi-card">
+      <div class="k-label">Tổng bài đăng</div>
+      <div class="k-val" data-kpi="all">{{ counts.all }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="k-label">Đang chờ duyệt</div>
+      <div class="k-val" style="color:var(--amber);" data-kpi="pending">{{ counts.pending }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="k-label">Đã phê duyệt</div>
+      <div class="k-val" style="color:var(--mint);" data-kpi="approved">{{ counts.approved }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="k-label">Bị từ chối</div>
+      <div class="k-val" style="color:var(--rose);" data-kpi="rejected">{{ counts.rejected }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="k-label">Tổng tài khoản</div>
+      <div class="k-val">{{ counts.users }}</div>
+    </div>
+  </div>
+
+  <div class="panel reveal">
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+      <h3 style="margin:0;">Hàng đợi duyệt bài đăng</h3>
+      <div class="admin-tabs" style="margin:0;">
+        <a class="admin-tab {% if active_status == 'all' %}active{% endif %}" href="/admin?status=all">Tất cả</a>
+        <a class="admin-tab {% if active_status == 'pending' %}active{% endif %}" href="/admin?status=pending">Chờ duyệt</a>
+        <a class="admin-tab {% if active_status == 'approved' %}active{% endif %}" href="/admin?status=approved">Đã duyệt</a>
+        <a class="admin-tab {% if active_status == 'rejected' %}active{% endif %}" href="/admin?status=rejected">Bị từ chối</a>
+      </div>
+    </div>
+
+    {% if listings %}
+      <div class="mod-list">
+        {% for item in listings %}
+          <div class="mod-card" data-mod-card="{{ item.id }}">
+            <img class="mod-thumb" src="{{ item.image_url }}" alt="{{ item.title }}" />
+            <div>
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem; margin-bottom:0.35rem;">
+                <span class="area-tag">{{ item.property_type }}</span>
+                <span class="status-badge status-{{ item.status }}" data-status-badge>
+                  {% if item.status == 'approved' %}Đã duyệt{% elif item.status == 'pending' %}Chờ duyệt{% else %}Bị từ chối{% endif %}
+                </span>
+                <span style="font-size:0.8rem; color:var(--ink-muted);">#{{ item.id }} • {{ item.created_at }}</span>
+              </div>
+              <a class="card-title" href="/listing/{{ item.id }}">{{ item.title }}</a>
+              <div class="card-address" style="margin-top:0.25rem;">
+                <strong>{{ item.price | vnd }}</strong> • {{ item.area | int }} m² • {{ item.address }}
+              </div>
+              <div style="font-size:0.82rem; color:var(--ink-muted); margin-top:0.25rem;">
+                Chủ đăng: <strong>{{ item.landlord_name }}</strong> ({{ item.landlord_email }} — {{ item.contact_phone }})
+              </div>
+              <div style="font-size:0.82rem; color:var(--indigo); margin-top:0.3rem;" data-admin-note>
+                {% if item.admin_note %}Ghi chú Admin: {{ item.admin_note }}{% endif %}
+              </div>
+            </div>
+
+            <div class="mod-actions">
+              <button class="btn btn-mint btn-sm" type="button" data-admin-action="approved" data-listing-id="{{ item.id }}">Duyệt hiển thị</button>
+              <button class="btn btn-ghost btn-sm" type="button" data-admin-action="rejected" data-listing-id="{{ item.id }}">Từ chối bài</button>
+              <button class="btn btn-rose btn-sm" type="button" data-admin-action="delete" data-listing-id="{{ item.id }}">Xóa bài</button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">Không có bài đăng nào trong mục này.</div>
+    {% endif %}
+  </div>
+
+  <div class="panel reveal">
+    <h3>Danh sách người dùng hệ thống</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Họ và tên</th>
+            <th>Email</th>
+            <th>Số điện thoại</th>
+            <th>Vai trò</th>
+            <th>Ngày tạo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users_list %}
+            <tr>
+              <td>#{{ u.id }}</td>
+              <td><strong>{{ u.full_name }}</strong></td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.phone }}</td>
+              <td>
+                <span class="role-pill role-{{ u.role }}">
+                  {% if u.role == 'admin' %}Admin{% elif u.role == 'landlord' %}Chủ trọ{% else %}Sinh viên{% endif %}
+                </span>
+              </td>
+              <td>{{ u.created_at }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

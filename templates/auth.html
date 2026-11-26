@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Đăng nhập & Đăng ký — TrọUni{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="auth-wrap reveal">
+    <div class="auth-side">
+      <div>
+        <div class="hero-eyebrow"><span class="pulse-dot"></span> Hệ thống phân quyền 3 vai trò</div>
+        <h2>Một tài khoản, trải nghiệm trọn vẹn cho đồ án của bạn.</h2>
+        <p style="color:rgba(255,255,255,0.8); font-size:0.95rem;">
+          Chọn vai trò <strong>Người tìm trọ</strong> để lưu và lọc phòng, hoặc <strong>Chủ cho thuê</strong> để đăng tin chờ Admin xét duyệt.
+        </p>
+      </div>
+
+      <div class="demo-box">
+        <h4>Tài khoản Demo (Nhấn để điền nhanh)</h4>
+        <div class="demo-btns">
+          <button type="button" class="demo-fill-btn" data-demo-email="admin@trosv.edu.vn" data-demo-pass="Admin@123" data-demo-label="Admin Mode">
+            <strong>Admin Mode</strong> — admin@trosv.edu.vn / Admin@123
+          </button>
+          <button type="button" class="demo-fill-btn" data-demo-email="chutro@trosv.edu.vn" data-demo-pass="Chutro@123" data-demo-label="Chủ trọ">
+            <strong>Chủ cho thuê</strong> — chutro@trosv.edu.vn / Chutro@123
+          </button>
+          <button type="button" class="demo-fill-btn" data-demo-email="sinhvien@trosv.edu.vn" data-demo-pass="Sinhvien@123" data-demo-label="Sinh viên">
+            <strong>Sinh viên tìm trọ</strong> — sinhvien@trosv.edu.vn / Sinhvien@123
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-main">
+      <div class="tab-switch">
+        <button type="button" class="tab-btn {% if active_tab == 'login' %}active{% endif %}" data-auth-tab="login">Đăng nhập</button>
+        <button type="button" class="tab-btn {% if active_tab == 'register' %}active{% endif %}" data-auth-tab="register">Đăng ký mới</button>
+      </div>
+
+      <div data-auth-panel="login" style="display: {% if active_tab == 'login' %}block{% else %}none{% endif %};">
+        <form class="form-grid" method="post" action="/login">
+          <div class="field">
+            <label for="login-email">Email</label>
+            <input class="input" id="login-email" type="email" name="email" required placeholder="sinhvien@trosv.edu.vn" />
+          </div>
+          <div class="field">
+            <label for="login-password">Mật khẩu</label>
+            <input class="input" id="login-password" type="password" name="password" required placeholder="Nhập mật khẩu..." />
+          </div>
+          <button class="btn btn-primary" type="submit" style="margin-top:0.5rem;">Đăng nhập ngay</button>
+        </form>
+      </div>
+
+      <div data-auth-panel="register" style="display: {% if active_tab == 'register' %}block{% else %}none{% endif %};">
+        <form class="form-grid" method="post" action="/register">
+          <div class="field">
+            <label>Bạn là ai?</label>
+            <div class="role-picker">
+              <label class="role-option">
+                <input type="radio" name="role" value="renter" checked />
+                <div class="role-card">
+                  <strong>Người tìm trọ</strong>
+                  <span>Tìm kiếm, lọc giá và lưu phòng yêu thích</span>
+                </div>
+              </label>
+              <label class="role-option">
+                <input type="radio" name="role" value="landlord" />
+                <div class="role-card">
+                  <strong>Đăng cho thuê</strong>
+                  <span>Đăng bài phòng trọ, CCMN và theo dõi duyệt</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="reg-name">Họ và tên</label>
+            <input class="input" id="reg-name" type="text" name="full_name" required placeholder="Nguyễn Văn A" />
+          </div>
+
+          <div class="form-row-2">
+            <div class="field">
+              <label for="reg-email">Email</label>
+              <input class="input" id="reg-email" type="email" name="email" required placeholder="email@example.com" />
+            </div>
+            <div class="field">
+              <label for="reg-phone">Số điện thoại</label>
+              <input class="input" id="reg-phone" type="text" name="phone" required placeholder="09xxxxxxxx" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="reg-password">Mật khẩu (tối thiểu 6 ký tự)</label>
+            <input class="input" id="reg-password" type="password" name="password" minlength="6" required placeholder="••••••••" />
+          </div>
+
+          <button class="btn btn-primary" type="submit" style="margin-top:0.4rem;">Tạo tài khoản</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
